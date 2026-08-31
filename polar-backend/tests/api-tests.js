@@ -336,6 +336,67 @@ async function run() {
     assert(data.data.totalExpeditions !== undefined, 'Missing totalExpeditions');
   });
 
+  // --- POLAR VAANI (Multilingual Voice & Audio) ---
+  await test('Polar Vaani: List supported languages', async () => {
+    const res = await fetch(`${API}/vaani/languages`);
+    const data = await res.json();
+    assert(res.status === 200, `Expected 200, got ${res.status}`);
+    assert(data.data.hi, 'Missing Hindi language in supported dictionary');
+    assert(data.data.ta, 'Missing Tamil language in supported dictionary');
+  });
+
+  await test('Polar Vaani: Translate text to Hindi', async () => {
+    const res = await fetch(`${API}/vaani/translate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: 'India established the Bharati Research Station in East Antarctica in 2012.',
+        targetLang: 'hi'
+      })
+    });
+    const data = await res.json();
+    assert(res.status === 200, `Expected 200, got ${res.status}`);
+    assert(data.data.translated, 'No translated text returned');
+  });
+
+  await test('Polar Vaani: Synthesize speech to audio MP3', async () => {
+    const res = await fetch(`${API}/vaani/synthesize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: 'नमस्ते भारत! यह राष्ट्रीय ध्रुवीय एवं महासागर अनुसंधान केंद्र का समाचार है।',
+        lang: 'hi'
+      })
+    });
+    const data = await res.json();
+    assert(res.status === 200, `Expected 200, got ${res.status}`);
+    assert(data.data.audioUrl, 'No audioUrl returned');
+  });
+
+  await test('Polar Vaani: Get daily polar audio bulletin', async () => {
+    const res = await fetch(`${API}/vaani/daily-bulletin?lang=hi`);
+    const data = await res.json();
+    assert(res.status === 200, `Expected 200, got ${res.status}`);
+    assert(data.data.audioUrl, 'Missing bulletin audioUrl');
+    assert(data.data.transcript, 'Missing bulletin transcript');
+  });
+
+  await test('Polar Vaani: Generate audio podcast episode', async () => {
+    const res = await fetch(`${API}/vaani/podcast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic: 'Himalayan Glaciers & Climate Security',
+        lang: 'hi',
+        station: 'HIMANSH'
+      })
+    });
+    const data = await res.json();
+    assert(res.status === 201, `Expected 201, got ${res.status}`);
+    assert(data.data.audioUrl, 'Missing podcast audioUrl');
+    assert(data.data.script, 'Missing podcast script');
+  });
+
   // --- 404 HANDLING ---
   await test('Non-existent route returns 404', async () => {
     const res = await fetch(`${API}/nonexistent`);

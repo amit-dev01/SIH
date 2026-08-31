@@ -298,10 +298,15 @@ npm start
 | `GET` | `/api/v1/search?q=` | Federated full-text search across all portal content |
 | `GET` | `/api/v1/search/suggest?q=` | Live autocomplete search suggestions |
 | `GET` | `/api/v1/map/locations` | Geo-coordinates of base stations & tagged media pins |
-| `GET` | `/api/v1/map/expeditions` | Expedition station coordinates |
-| `GET` | `/api/v1/map/media` | Geo-tagged photo and video locations |
-| `GET` | `/api/v1/outreach/published` | Public feed of approved polar outreach stories |
-| `GET` | `/api/v1/analytics/popular` | Most downloaded datasets, latest media, and top expeditions |
+| `GET` | `/api/v1/map/expeditions` | Base station locations with activity metrics |
+| `GET` | `/api/v1/map/media` | Geo-tagged media assets |
+| `GET` | `/api/v1/outreach/published` | Public feed of approved polar science stories |
+| `GET` | `/api/v1/vaani/languages` | List 9 supported Indian languages for translation & TTS |
+| `GET` | `/api/v1/vaani/daily-bulletin` | 60-second audio science bulletin from Antarctica/Arctic in any Indian language |
+| `POST` | `/api/v1/vaani/translate` | Translate polar text into Hindi, Tamil, Telugu, Bengali, Marathi, etc. |
+| `POST` | `/api/v1/vaani/synthesize` | Convert Indian regional text to spoken audio MP3 stream |
+| `POST` | `/api/v1/vaani/podcast` | Generate full audio podcast episode on polar science topics |
+| `GET` | `/api/v1/analytics/popular` | Most accessed expeditions, publications, and downloads |
 | `GET` | `/api/v1/analytics/timeline` | Expedition commencement and completion timeline |
 
 ### 🔒 Protected Endpoints (Bearer JWT Required)
@@ -427,7 +432,7 @@ Testing API at: http://localhost:3000/api/v1
 ✅ PASS: Delete test expedition
 
 ==================================================
-📊 Results: 30 passed, 0 failed
+📊 Results: 35 passed, 0 failed
 ==================================================
 ```
 
