@@ -20,6 +20,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/expeditions', require('./modules/expedition/expedition.routes'));
 app.use('/api/v1/media', require('./modules/media/media.routes'));
+app.use('/api/v1/publications', require('./modules/publication/publication.routes'));
+app.use('/api/v1/datasets', require('./modules/dataset/dataset.routes'));
 
 // 404 Handler
 app.use((req, res) => {
