@@ -20,10 +20,11 @@ const errorHandler = (err, req, res, next) => {
     return apiResponse.error(res, 'File upload failed', 500);
   }
 
+  const statusCode = err.statusCode || err.status || 500;
   const isDev = config.nodeEnv === 'development';
-  const defaultMessage = isDev && err.message ? `Internal server error: ${err.message}` : 'Internal server error';
+  const message = statusCode < 500 || isDev ? err.message : 'Internal server error';
 
-  return apiResponse.error(res, defaultMessage, 500);
+  return apiResponse.error(res, message, statusCode);
 };
 
 module.exports = errorHandler;

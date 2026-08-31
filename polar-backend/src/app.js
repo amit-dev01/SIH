@@ -18,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/v1/health', healthRoutes);
+app.use('/api/v1/expeditions', require('./modules/expedition/expedition.routes'));
 
 // 404 Handler
 app.use((req, res) => {
