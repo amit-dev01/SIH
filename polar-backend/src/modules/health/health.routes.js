@@ -4,6 +4,42 @@ const supabase = require('../../config/supabase');
 const asyncHandler = require('../../utils/asyncHandler');
 const apiResponse = require('../../utils/apiResponse');
 
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check and database connectivity status
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Server is healthy and running
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Health check passed
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       example: ok
+ *                     database:
+ *                       type: string
+ *                       example: connected
+ *                     uptime:
+ *                       type: number
+ *                       example: 45.2
+ *                     timestamp:
+ *                       type: string
+ *                       example: 2026-08-31T10:00:00.000Z
+ */
 router.get(
   '/',
   asyncHandler(async (req, res) => {
