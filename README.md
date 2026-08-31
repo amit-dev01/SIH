@@ -9,8 +9,8 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Express](https://img.shields.io/badge/Express.js-4.21-black?style=for-the-badge&logo=express)](https://expressjs.com)
 [![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Storage-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
-[![Groq AI](https://img.shields.io/badge/AI%20Engine-Groq%20LPU%20(Llama%203.3)-F55036?style=for-the-badge)](https://groq.com)
-[![Swagger](https://img.shields.io/badge/Docs-Swagger%20OpenAPI%203.0-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](http://localhost:3000/api-docs)
+[![Live API](https://img.shields.io/badge/Live%20API-polar--outreach.onrender.com-success?style=for-the-badge&logo=render)](https://polar-outreach.onrender.com/api/v1/health)
+[![Swagger](https://img.shields.io/badge/Docs-Swagger%20OpenAPI%203.0-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://polar-outreach.onrender.com/api-docs)
 
 <p align="center">
   <b>Developed for National Centre for Polar and Ocean Research (NCPOR)</b><br/>
@@ -182,7 +182,8 @@ The portal incorporates an **Automated Science Communication Pipeline**:
 
 The API comes with built-in **Swagger UI** for testing all endpoints directly in your browser.
 
-- **Swagger Documentation URL:** [`http://localhost:3000/api-docs`](http://localhost:3000/api-docs)
+- **Live Production Swagger UI:** [`https://polar-outreach.onrender.com/api-docs`](https://polar-outreach.onrender.com/api-docs)
+- **Local Development Swagger UI:** [`http://localhost:3000/api-docs`](http://localhost:3000/api-docs)
 
 ---
 
@@ -270,8 +271,10 @@ npm start
 ```
 
 ### 6. Verify Installation
-- **Health Check:** `curl http://localhost:3000/api/v1/health`
-- **Swagger UI:** Open [http://localhost:3000/api-docs](http://localhost:3000/api-docs) in your browser.
+- **Live Production Health Check:** `curl https://polar-outreach.onrender.com/api/v1/health`
+- **Live Swagger Documentation:** [https://polar-outreach.onrender.com/api-docs](https://polar-outreach.onrender.com/api-docs)
+- **Local Health Check:** `curl http://localhost:3000/api/v1/health`
+- **Local Swagger UI:** [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
 
 ---
 

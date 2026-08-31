@@ -14,7 +14,8 @@ const options = {
       }
     },
     servers: [
-      { url: '/api/v1', description: 'API v1' },
+      { url: 'https://polar-outreach.onrender.com/api/v1', description: 'Production API (Render)' },
+      { url: '/api/v1', description: 'Relative API Path' },
       { url: 'http://localhost:3000/api/v1', description: 'Local Development Server' }
     ],
     components: {
