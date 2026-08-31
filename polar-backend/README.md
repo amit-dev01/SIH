@@ -26,7 +26,7 @@ A high-performance, modular backend API that:
 | **Framework** | Express.js 4.x |
 | **Database & Auth** | Supabase (PostgreSQL 15 + Row Level Security + Auth JWT) |
 | **File Storage** | Supabase Storage (S3-compatible bucket storage) |
-| **AI / LLM** | OpenAI (`gpt-4o-mini`), local Ollama (`llama3.2`), or built-in Realistic Mock mode |
+| **AI / LLM** | Groq (`llama-3.3-70b-versatile` / `llama-3.1-8b-instant`), OpenAI, local Ollama, or built-in Mock mode |
 | **Data Validation** | Zod 3.x |
 | **Image Processing** | Sharp (dynamic WebP thumbnails) |
 | **File Uploads** | Multer |
@@ -129,7 +129,8 @@ npm run dev
 ## 🤖 AI Content Generation
 
 Set `AI_PROVIDER` in `.env`:
-- `mock` *(Default)*: Produces realistic, NCPOR-tailored science communication templates without requiring an API key.
+- `groq` *(Primary)*: Ultra-fast LPUs powered by `llama-3.3-70b-versatile` or `llama-3.1-8b-instant` via `GROQ_API_KEY`.
+- `mock` *(Demo-Safe)*: Produces realistic, NCPOR-tailored science communication templates without requiring an API key.
 - `openai`: Connects to OpenAI (`gpt-4o-mini`) using `OPENAI_API_KEY`.
 - `ollama`: Uses a local LLM (`llama3.2`) via `OLLAMA_URL`.
 

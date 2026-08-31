@@ -106,11 +106,45 @@ This work exemplifies how Indian science addresses global environmental challeng
 };
 
 /**
- * Main function to generate outreach content via OpenAI, Ollama, or Mock
+ * Main function to generate outreach content via Groq (Primary), OpenAI, Ollama, or Mock
  */
 const generateContent = async (systemPrompt, userPrompt, platform = 'TWITTER', sourceContent = '') => {
-  const provider = (config.aiProvider || 'mock').toLowerCase();
+  const provider = (config.aiProvider || 'groq').toLowerCase();
 
+  // 1. Groq Provider (Primary Ultra-Fast Inference via LPU)
+  if (provider === 'groq') {
+    if (!config.groqApiKey || config.groqApiKey.startsWith('gsk_your')) {
+      logger.warn('Groq API key missing or placeholder. Falling back to Mock provider.');
+      return generateMockContent(platform, sourceContent);
+    }
+
+    try {
+      const Groq = require('groq-sdk');
+      const groq = new Groq({ apiKey: config.groqApiKey });
+
+      const response = await groq.chat.completions.create({
+        model: config.groqModel || 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      });
+
+      const content = response.choices?.[0]?.message?.content?.trim();
+      if (!content) {
+        throw new Error('Received empty response from Groq');
+      }
+      return content;
+    } catch (error) {
+      logger.error(`Groq error: ${error.message}`);
+      logger.warn('Falling back to realistic Mock generation.');
+      return generateMockContent(platform, sourceContent);
+    }
+  }
+
+  // 2. OpenAI Provider (Secondary)
   if (provider === 'openai') {
     if (!config.openaiKey || config.openaiKey.startsWith('sk-your')) {
       logger.warn('OpenAI API key missing or placeholder. Falling back to Mock provider.');
@@ -143,6 +177,7 @@ const generateContent = async (systemPrompt, userPrompt, platform = 'TWITTER', s
     }
   }
 
+  // 3. Ollama Provider (Local self-hosted)
   if (provider === 'ollama') {
     try {
       const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';

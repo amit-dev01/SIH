@@ -14,7 +14,9 @@ const config = {
   supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   port: parseInt(process.env.PORT, 10) || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
-  aiProvider: process.env.AI_PROVIDER || 'mock',
+  aiProvider: process.env.AI_PROVIDER || 'groq',
+  groqApiKey: process.env.GROQ_API_KEY || '',
+  groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
   openaiKey: process.env.OPENAI_API_KEY || ''
 };
 
