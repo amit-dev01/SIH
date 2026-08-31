@@ -19,40 +19,43 @@ const translateText = async (text, targetLang = 'hi', sourceLang = 'en') => {
     return cached;
   }
 
-  // 1. Try Groq AI Translation
-  if (config.groqApiKey && !config.groqApiKey.startsWith('gsk_your')) {
-    try {
-      const Groq = require('groq-sdk');
-      const groq = new Groq({ apiKey: config.groqApiKey });
-
-      const response = await groq.chat.completions.create({
-        model: config.groqModel || 'qwen/qwen3.8-27b',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert scientific and linguistic translator for the National Centre for Polar and Ocean Research (NCPOR), Ministry of Earth Sciences, Govt. of India.
+  // 1. Try Groq AI Translation with Key Pool
+  const keys = config.groqApiKeys;
+  if (keys && keys.length > 0) {
+    const Groq = require('groq-sdk');
+    for (let attempt = 0; attempt < keys.length; attempt++) {
+      const activeKey = keys[attempt];
+      try {
+        const groq = new Groq({ apiKey: activeKey });
+        const response = await groq.chat.completions.create({
+          model: config.groqModel || 'qwen/qwen3.8-27b',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an expert scientific and linguistic translator for the National Centre for Polar and Ocean Research (NCPOR), Ministry of Earth Sciences, Govt. of India.
 Translate the input text accurately into ${langInfo.name} (${langInfo.native}).
 Requirements:
 1. Ensure the tone is inspiring, scientific, yet accessible to Indian students and citizens.
 2. Maintain natural phrasing and correct script in ${langInfo.name}.
 3. Return ONLY the translated text. Do not include markdown code blocks, prefixes, or conversational remarks.`
-          },
-          {
-            role: 'user',
-            content: text
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 1500
-      });
+            },
+            {
+              role: 'user',
+              content: text
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 1500
+        });
 
-      const translated = response.choices?.[0]?.message?.content?.trim();
-      if (translated) {
-        cache.set(cacheKey, translated, 3600);
-        return translated;
+        const translated = response.choices?.[0]?.message?.content?.trim();
+        if (translated) {
+          cache.set(cacheKey, translated, 3600);
+          return translated;
+        }
+      } catch (err) {
+        logger.warn(`Groq Key [${attempt + 1}/${keys.length}] translation failed: ${err.message}. Trying next key...`);
       }
-    } catch (err) {
-      logger.warn(`Groq translation to ${langInfo.name} failed: ${err.message}. Using fallback translation.`);
     }
   }
 

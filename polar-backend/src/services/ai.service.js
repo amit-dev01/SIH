@@ -111,70 +111,77 @@ This work exemplifies how Indian science addresses global environmental challeng
 const generateContent = async (systemPrompt, userPrompt, platform = 'TWITTER', sourceContent = '') => {
   const provider = (config.aiProvider || 'groq').toLowerCase();
 
-  // 1. Groq Provider (Primary Ultra-Fast Inference via LPU)
+  // 1. Groq Provider (Primary Ultra-Fast Inference via LPU with Key Pool & Auto-Failover)
   if (provider === 'groq') {
-    if (!config.groqApiKey || config.groqApiKey.startsWith('gsk_your')) {
-      logger.warn('Groq API key missing or placeholder. Falling back to Mock provider.');
+    const keys = config.groqApiKeys;
+    if (!keys || keys.length === 0) {
+      logger.warn('Groq API key(s) missing or placeholder. Falling back to Mock provider.');
       return generateMockContent(platform, sourceContent);
     }
 
-    try {
-      const Groq = require('groq-sdk');
-      const groq = new Groq({ apiKey: config.groqApiKey });
+    const Groq = require('groq-sdk');
 
-      const response = await groq.chat.completions.create({
-        model: config.groqModel || 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000
-      });
+    // Try available keys in pool with auto-failover
+    for (let attempt = 0; attempt < keys.length; attempt++) {
+      const activeKey = keys[attempt];
+      try {
+        const groq = new Groq({ apiKey: activeKey });
+        const response = await groq.chat.completions.create({
+          model: config.groqModel || 'qwen/qwen3.8-27b',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 1000
+        });
 
-      const content = response.choices?.[0]?.message?.content?.trim();
-      if (!content) {
-        throw new Error('Received empty response from Groq');
+        const content = response.choices?.[0]?.message?.content?.trim();
+        if (content) {
+          return content;
+        }
+      } catch (error) {
+        logger.warn(`Groq Key [${attempt + 1}/${keys.length}] failed (${error.message}). Attempting next key in pool...`);
       }
-      return content;
-    } catch (error) {
-      logger.error(`Groq error: ${error.message}`);
-      logger.warn('Falling back to realistic Mock generation.');
-      return generateMockContent(platform, sourceContent);
     }
+
+    logger.error('All Groq keys in pool exhausted. Falling back to realistic Mock generation.');
+    return generateMockContent(platform, sourceContent);
   }
 
-  // 2. OpenAI Provider (Secondary)
-  if (provider === 'openai') {
-    if (!config.openaiKey || config.openaiKey.startsWith('sk-your')) {
-      logger.warn('OpenAI API key missing or placeholder. Falling back to Mock provider.');
+  // 2. Google Gemini Provider (Fast Multi-Modal & Multi-Key Support)
+  if (provider === 'gemini') {
+    const keys = config.geminiApiKeys;
+    if (!keys || keys.length === 0) {
+      logger.warn('Google Gemini API key(s) missing or placeholder. Falling back to Mock provider.');
       return generateMockContent(platform, sourceContent);
     }
 
-    try {
-      const OpenAI = require('openai');
-      const client = new OpenAI({ apiKey: config.openaiKey });
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-      const response = await client.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000
-      });
+    // Try available Gemini keys in pool with auto-failover
+    for (let attempt = 0; attempt < keys.length; attempt++) {
+      const activeKey = keys[attempt];
+      try {
+        const genAI = new GoogleGenerativeAI(activeKey);
+        const model = genAI.getGenerativeModel({
+          model: config.geminiModel || 'gemini-1.5-flash',
+          systemInstruction: systemPrompt
+        });
 
-      const content = response.choices?.[0]?.message?.content?.trim();
-      if (!content) {
-        throw new Error('Received empty response from OpenAI');
+        const result = await model.generateContent(userPrompt);
+        const response = await result.response;
+        const content = response.text()?.trim();
+        if (content) {
+          return content;
+        }
+      } catch (error) {
+        logger.warn(`Gemini Key [${attempt + 1}/${keys.length}] failed (${error.message}). Attempting next key in pool...`);
       }
-      return content;
-    } catch (error) {
-      logger.error(`OpenAI error: ${error.message}`);
-      logger.warn('Falling back to realistic Mock generation.');
-      return generateMockContent(platform, sourceContent);
     }
+
+    logger.error('All Gemini keys in pool exhausted. Falling back to realistic Mock generation.');
+    return generateMockContent(platform, sourceContent);
   }
 
   // 3. Ollama Provider (Local self-hosted)
