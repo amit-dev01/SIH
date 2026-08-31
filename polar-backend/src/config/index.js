@@ -16,7 +16,7 @@ const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
   aiProvider: process.env.AI_PROVIDER || 'groq',
   groqApiKey: process.env.GROQ_API_KEY || '',
-  groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+  groqModel: process.env.GROQ_MODEL || 'qwen/qwen3.8-27b',
   openaiKey: process.env.OPENAI_API_KEY || ''
 };
 
