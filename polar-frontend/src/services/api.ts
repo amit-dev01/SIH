@@ -1,4 +1,4 @@
-import { ApiResponse, Expedition, ExpeditionDetail, ExpeditionStats, Media, Publication, Dataset, SearchResults } from '../types';
+import { ApiResponse, Expedition, ExpeditionDetail, ExpeditionStats, Media, Publication, Dataset, SearchResults, OutreachArticle } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
@@ -138,6 +138,13 @@ export const api = {
       throw new Error('Search query is required');
     }
     return fetchAPI<SearchResults>(`/search?q=${encodeURIComponent(query)}`);
+  },
+
+  /**
+   * Get all published outreach articles
+   */
+  async getPublishedOutreach(): Promise<ApiResponse<OutreachArticle[]>> {
+    return fetchAPI<OutreachArticle[]>('/outreach/published');
   }
 };
 export default api;

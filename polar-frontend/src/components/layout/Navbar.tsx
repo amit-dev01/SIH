@@ -15,7 +15,7 @@ export default function Navbar() {
     { name: 'Publications', href: '/publications', icon: FileText },
     { name: 'Media Gallery', href: '/media', icon: Image },
     { name: 'Polar Map', href: '/map', icon: Map },
-    { name: 'Outreach', href: '/news', icon: Newspaper },
+    { name: 'Outreach', href: '/outreach', icon: Newspaper },
   ];
 
   const isActive = (path: string) => pathname?.startsWith(path);

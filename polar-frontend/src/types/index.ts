@@ -94,3 +94,15 @@ export interface PolarStation {
   station_type: string;
   description: string;
 }
+
+export interface OutreachArticle {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  published_at: string;
+  category?: string;
+  cover_image_url?: string;
+  expedition_id?: string;
+}
