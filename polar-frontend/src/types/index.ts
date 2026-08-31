@@ -84,3 +84,13 @@ export interface SearchResults {
   datasets?: Dataset[];
   media?: Media[];
 }
+
+export interface PolarStation {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  region: string;
+  station_type: string;
+  description: string;
+}
