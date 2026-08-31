@@ -376,6 +376,63 @@ polar-backend/
 
 ---
 
+## 🧪 Testing
+
+### Run Automated API Tests
+The test suite validates all 30 endpoints, auth guards, data integrity, and error handlers:
+
+```bash
+# Run tests against local development server
+node tests/api-tests.js
+
+# Or test against live production deployment
+API_URL=https://polar-outreach.onrender.com/api/v1 node tests/api-tests.js
+```
+
+### Expected Output
+```
+🧊 Polar Science Portal — API Test Suite
+
+Testing API at: http://localhost:3000/api/v1
+
+✅ PASS: Health check returns ok
+✅ PASS: Sign up a test user via Supabase
+✅ PASS: Create expedition (protected)
+✅ PASS: List expeditions (public)
+✅ PASS: Get expedition by ID
+✅ PASS: Get expedition by slug
+✅ PASS: Filter expeditions by region
+✅ PASS: Get expedition stats
+✅ PASS: Update expedition
+✅ PASS: Reject invalid expedition data
+✅ PASS: Reject unauthenticated create
+✅ PASS: Create publication
+✅ PASS: List publications
+✅ PASS: Search returns mixed results
+✅ PASS: Search with type filter
+✅ PASS: Search rejects short query
+✅ PASS: Search suggest works
+✅ PASS: Map locations returns pins
+✅ PASS: Map expeditions returns data
+✅ PASS: Generate AI content (mock/groq mode)
+✅ PASS: List drafts
+✅ PASS: Approve draft
+✅ PASS: Publish draft
+✅ PASS: Published feed is public
+✅ PASS: Popular content (public)
+✅ PASS: Timeline (public)
+✅ PASS: Overview (admin only)
+✅ PASS: Non-existent route returns 404
+✅ PASS: Non-existent expedition returns 404
+✅ PASS: Delete test expedition
+
+==================================================
+📊 Results: 30 passed, 0 failed
+==================================================
+```
+
+---
+
 ## 👥 Team & Acknowledgments
 
 - **Developed for:** Smart India Hackathon (SIH 2026)

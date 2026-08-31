@@ -9,7 +9,7 @@ const search = asyncHandler(async (req, res) => {
     return apiResponse.error(res, 'Search query must be at least 2 characters', 400);
   }
 
-  const data = await service.search({
+  const searchResult = await service.search({
     q,
     type,
     region,
@@ -19,11 +19,17 @@ const search = asyncHandler(async (req, res) => {
     limit
   });
 
-  return apiResponse.success(res, data.results, 'Search results', 200, {
-    ...data.meta,
-    counts: data.counts,
-    total: data.total
-  });
+  return apiResponse.success(
+    res,
+    {
+      results: searchResult.results,
+      counts: searchResult.counts,
+      total: searchResult.total
+    },
+    'Search results',
+    200,
+    searchResult.meta
+  );
 });
 
 const suggest = asyncHandler(async (req, res) => {

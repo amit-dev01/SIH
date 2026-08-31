@@ -22,17 +22,35 @@ const authenticate = async (req, res, next) => {
 
     const user = data.user;
 
-    const { data: profile } = await supabase
+    // Fetch user profile from public.users table
+    let { data: profile } = await supabase
       .from('users')
       .select('role, name')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+
+    const role = profile?.role || user.user_metadata?.role || user.app_metadata?.role || 'PUBLIC';
+    const name = profile?.name || user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+
+    // Auto-sync profile to public.users if missing
+    if (!profile) {
+      try {
+        await supabase.from('users').upsert({
+          id: user.id,
+          email: user.email,
+          name,
+          role
+        }, { onConflict: 'id' });
+      } catch (_) {
+        // Silently continue if upsert fails
+      }
+    }
 
     req.user = {
       id: user.id,
       email: user.email,
-      role: profile?.role || 'PUBLIC',
-      name: profile?.name || 'User'
+      role,
+      name
     };
 
     next();

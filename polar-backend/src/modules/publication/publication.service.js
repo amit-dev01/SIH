@@ -166,10 +166,7 @@ const create = async (data, pdfFile, userId) => {
   // d) Insert into publications table
   const { data: publication, error: dbError } = await supabase
     .from('publications')
-    .insert({
-      ...insertPayload,
-      created_by: userId
-    })
+    .insert(insertPayload)
     .select()
     .single();
 

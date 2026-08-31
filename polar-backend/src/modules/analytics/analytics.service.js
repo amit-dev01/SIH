@@ -164,7 +164,7 @@ const getActivityLog = async (query = {}) => {
   let q = supabase.from('activity_log').select(
     `
     *,
-    user:users(name, email)
+    user:users(name)
   `,
     { count: 'exact' }
   );

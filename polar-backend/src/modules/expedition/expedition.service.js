@@ -135,7 +135,7 @@ const getByIdOrSlug = async (idOrSlug) => {
 
   let q = supabase.from('expeditions').select(`
     *,
-    leader:users!leader_id(id, name, email),
+    leader:users!leader_id(id, name),
     created_by_user:users!created_by(id, name),
     publications(id, title, doi, published_date),
     media(id, title, type, thumbnail_url, file_url),
@@ -218,12 +218,25 @@ const update = async (id, data, userId, userRole) => {
  * 5. Delete an expedition
  */
 const remove = async (id) => {
+  const { data: existing, error: findError } = await supabase
+    .from('expeditions')
+    .select('id')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (findError || !existing) {
+    const err = new Error('Resource not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
   const { error } = await supabase.from('expeditions').delete().eq('id', id);
 
   if (error) {
     throw error;
   }
 
+  logger.info(`Expedition deleted: ${id}`);
   return { message: 'Expedition deleted' };
 };
 
