@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+:root {
+  /* Editorial Polar Ice Theme (Light Mode Default) */
+  --background: #f8fafc; /* Slate 50 */
+  --foreground: #0f172a; /* Slate 900 */
+  
+  --card-bg: #ffffff;
+  --card-border: #cbd5e1; /* Slate 300 - sharp high-contrast border */
+  --muted: #475569; /* Slate 600 */
+  --muted-bg: #f1f5f9; /* Slate 100 */
+  
+  --primary: #0f172a; /* Deep Navy */
+  --primary-foreground: #f8fafc;
+  
+  --accent: #0284c7; /* Glacial sky blue */
+  --accent-light: #e0f2fe; /* Light ice blue */
+  --accent-foreground: #0369a1;
+
+  --success: #166534;
+  --error: #9f1239;
+  
+  --font-serif-family: Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Editorial Polar Night Theme (Dark Mode) */
+    --background: #020617; /* Slate 950 */
+    --foreground: #f8fafc; /* Slate 50 */
+    
+    --card-bg: #0f172a; /* Slate 900 */
+    --card-border: #334155; /* Slate 700 - sharp high-contrast border */
+    --muted: #94a3b8; /* Slate 400 */
+    --muted-bg: #0f172a; /* Slate 900 */
+    
+    --primary: #f8fafc;
+    --primary-foreground: #020617;
+    
+    --accent: #38bdf8; /* Glacial sky blue (dark mode version) */
+    --accent-light: #0c4a6e; /* Dark ice blue */
+    --accent-foreground: #e0f2fe;
+    
+    --success: #15803d;
+    --error: #be123c;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-muted-text: var(--muted);
+  --color-muted-bg: var(--muted-bg);
+  --color-primary-color: var(--primary);
+  --color-primary-fg: var(--primary-foreground);
+  --color-accent-color: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-accent-fg: var(--accent-foreground);
+  --color-success-color: var(--success);
+  --color-error-color: var(--error);
+  
+  --font-sans: var(--font-geist-sans), sans-serif;
+  --font-serif: var(--font-serif-family), serif;
+  --font-mono: var(--font-geist-mono), monospace;
+}
+
+/* Scientific Editorial Reset & Base Rules */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+p {
+  line-height: 1.625;
+  color: var(--foreground);
+}
+
+/* Custom design scrollbar representing frozen water */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
