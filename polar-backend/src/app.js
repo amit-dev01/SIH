@@ -24,6 +24,7 @@ app.use('/api/v1/publications', require('./modules/publication/publication.route
 app.use('/api/v1/datasets', require('./modules/dataset/dataset.routes'));
 app.use('/api/v1/search', require('./modules/search/search.routes'));
 app.use('/api/v1/map', require('./modules/map/map.routes'));
+app.use('/api/v1/outreach', require('./modules/outreach/outreach.routes'));
 
 // 404 Handler
 app.use((req, res) => {
