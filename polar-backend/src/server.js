@@ -7,3 +7,4 @@ app.listen(config.port, () => {
   logger.info(`📡 http://localhost:${config.port}`);
   logger.info(`✅ Health: http://localhost:${config.port}/api/v1/health`);
 });
+
