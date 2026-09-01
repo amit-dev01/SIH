@@ -2,7 +2,7 @@ const supabase = require('../../config/supabase');
 const logger = require('../../utils/logger');
 
 const STATION_COORDS = {
-  ANTARCTIC: [
+  ANTARCTICA: [
     {
       name: 'Bharati Station',
       lat: -69.4075,
