@@ -397,6 +397,40 @@ async function run() {
     assert(data.data.script, 'Missing podcast script');
   });
 
+  // --- ASK POLAR AI (RAG Research Assistant with Citations) ---
+  await test('Ask Polar AI: Get discovery suggestions', async () => {
+    const res = await fetch(`${API}/ask/suggestions`);
+    const data = await res.json();
+    assert(res.status === 200, `Expected 200, got ${res.status}`);
+    assert(Array.isArray(data.data), 'Expected suggestions to be an array');
+    assert(data.data.length > 0, 'Suggestions array should not be empty');
+  });
+
+  await test('Ask Polar AI: Ask research question with citations', async () => {
+    const res = await fetch(`${API}/ask`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: 'What research on ice core dynamics is conducted in Antarctica?',
+        region: 'ANTARCTIC'
+      })
+    });
+    const data = await res.json();
+    assert(res.status === 200, `Expected 200, got ${res.status}`);
+    assert(data.data.answer, 'Missing answer text in response');
+    assert(Array.isArray(data.data.sources), 'Missing sources array in response');
+    assert(Array.isArray(data.data.suggestedFollowUps), 'Missing suggestedFollowUps');
+  });
+
+  await test('Ask Polar AI: Reject too short question', async () => {
+    const res = await fetch(`${API}/ask`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: 'ab' })
+    });
+    assert(res.status === 400, `Expected 400, got ${res.status}`);
+  });
+
   // --- 404 HANDLING ---
   await test('Non-existent route returns 404', async () => {
     const res = await fetch(`${API}/nonexistent`);

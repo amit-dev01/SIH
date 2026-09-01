@@ -305,7 +305,8 @@ npm start
 | `GET` | `/api/v1/vaani/daily-bulletin` | 60-second audio science bulletin from Antarctica/Arctic in any Indian language |
 | `POST` | `/api/v1/vaani/translate` | Translate polar text into Hindi, Tamil, Telugu, Bengali, Marathi, etc. |
 | `POST` | `/api/v1/vaani/synthesize` | Convert Indian regional text to spoken audio MP3 stream |
-| `POST` | `/api/v1/vaani/podcast` | Generate full audio podcast episode on polar science topics |
+| `POST` | `/api/v1/ask` | Ask a polar science research question & receive answer with DOI citations |
+| `GET` | `/api/v1/ask/suggestions` | Curated polar science discovery questions |
 | `GET` | `/api/v1/analytics/popular` | Most accessed expeditions, publications, and downloads |
 | `GET` | `/api/v1/analytics/timeline` | Expedition commencement and completion timeline |
 
@@ -432,7 +433,7 @@ Testing API at: http://localhost:3000/api/v1
 ✅ PASS: Delete test expedition
 
 ==================================================
-📊 Results: 35 passed, 0 failed
+📊 Results: 38 passed, 0 failed
 ==================================================
 ```
 

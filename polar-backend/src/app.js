@@ -18,6 +18,7 @@ const mapRoutes = require('./modules/map/map.routes');
 const outreachRoutes = require('./modules/outreach/outreach.routes');
 const analyticsRoutes = require('./modules/analytics/analytics.routes');
 const vaaniRoutes = require('./modules/vaani/vaani.routes');
+const askRoutes = require('./modules/ask/ask.routes');
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/api/v1/map', mapRoutes);
 app.use('/api/v1/outreach', outreachRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/vaani', vaaniRoutes);
+app.use('/api/v1/ask', askRoutes);
 
 // 11. 404 Handler
 app.use((req, res) => {
