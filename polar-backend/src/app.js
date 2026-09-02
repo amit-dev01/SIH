@@ -19,6 +19,11 @@ const outreachRoutes = require('./modules/outreach/outreach.routes');
 const analyticsRoutes = require('./modules/analytics/analytics.routes');
 const vaaniRoutes = require('./modules/vaani/vaani.routes');
 const askRoutes = require('./modules/ask/ask.routes');
+const stationsRoutes = require('./modules/stations/stations.routes');
+const assistantRoutes = require('./modules/assistant/assistant.routes');
+const authRoutes = require('./modules/auth/auth.routes');
+const workspaceRoutes = require('./modules/workspace/workspace.routes');
+const knowledgeRoutes = require('./modules/knowledge/knowledge.routes');
 
 const app = express();
 
@@ -36,7 +41,7 @@ app.use(express.urlencoded({ extended: true }));
 // 1. Swagger OpenAPI Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// 2-10. Application API Routes
+// 2. Primary /api/v1 Routes (Versioned API)
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/expeditions', expeditionRoutes);
 app.use('/api/v1/media', mediaRoutes);
@@ -48,13 +53,29 @@ app.use('/api/v1/outreach', outreachRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/vaani', vaaniRoutes);
 app.use('/api/v1/ask', askRoutes);
+app.use('/api/v1/stations', stationsRoutes);
+app.use('/api/v1/assistant', assistantRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/workspace', workspaceRoutes);
+app.use('/api/v1/knowledge', knowledgeRoutes);
 
-// 11. 404 Handler
+// 3. Direct /api/ Aliases (Frontend Flexibility: works whether frontend uses /api/ or /api/v1/)
+app.use('/api/assistant', assistantRoutes);
+app.use('/api/stations', stationsRoutes);
+app.use('/api/datasets', datasetRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/expeditions', expeditionRoutes);
+app.use('/api/media', mediaRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/workspace', workspaceRoutes);
+
+// 4. 404 Handler
 app.use((req, res) => {
-  return apiResponse.error(res, 'Route not found', 404);
+  return apiResponse.error(res, `Route not found: ${req.method} ${req.originalUrl}`, 404);
 });
 
-// 12. Global Error Handler
+// 5. Global Error Handler
 app.use(errorHandler);
 
 module.exports = app;

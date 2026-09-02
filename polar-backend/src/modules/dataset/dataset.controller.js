@@ -44,11 +44,31 @@ const remove = asyncHandler(async (req, res) => {
   return apiResponse.success(res, null, result.message || 'Dataset deleted');
 });
 
+const exportDataset = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { format } = req.query;
+  const result = await service.exportDataset(id, format);
+  res.setHeader('Content-Type', result.contentType);
+  res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+  return res.send(result.content);
+});
+
+const nlSearch = asyncHandler(async (req, res) => {
+  const { query } = req.body;
+  if (!query) {
+    return apiResponse.error(res, 'Query is required in request body', 400);
+  }
+  const result = await service.nlSearch(query);
+  return apiResponse.success(res, result, 'Natural language query interpreted');
+});
+
 module.exports = {
   getAll,
   getOne,
   create,
   download,
+  exportDataset,
+  nlSearch,
   update,
   remove
 };

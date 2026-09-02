@@ -1,13 +1,16 @@
 const supabase = require('../../config/supabase');
 const cache = require('../../utils/cache');
 const logger = require('../../utils/logger');
+const stationsService = require('../stations/stations.service');
+const { BASELINE_DATASETS, BASELINE_KNOWLEDGE } = require('../assistant/assistant.service');
 
 /**
- * 1. Unified search across Expeditions, Publications, Media, and Datasets
+ * 1. Unified search across Datasets, Knowledge (Publications), Media, Expeditions, and Stations
  */
 const search = async (query) => {
-  const { q, type, region, year, tags, page = 1, limit = 10 } = query;
+  const { q, type, region, year, tags, page = 1, limit = 20 } = query;
   const sanitizedQ = (q || '').trim();
+  const qLower = sanitizedQ.toLowerCase();
 
   // a) Check cache first
   const cacheKey = `search:${JSON.stringify({ q: sanitizedQ, type, region, year, tags, page, limit })}`;
@@ -17,18 +20,22 @@ const search = async (query) => {
   }
 
   // Parse types
-  const allTypes = ['expedition', 'publication', 'media', 'dataset'];
-  const requestedTypes = type
-    ? type.split(',').map((t) => t.trim().toLowerCase())
-    : allTypes;
+  const allEntityTypes = ['dataset', 'knowledge', 'media', 'expedition', 'station'];
+  let requestedTypes = allEntityTypes;
+
+  if (type && type !== 'all') {
+    const splitTypes = type.split(',').map((t) => t.trim().toLowerCase());
+    requestedTypes = splitTypes.map((t) => (t === 'publication' ? 'knowledge' : t));
+  }
 
   let expeditions = [];
   let publications = [];
   let mediaItems = [];
   let datasets = [];
+  let stations = [];
 
   try {
-    // Search Expeditions
+    // 1. Expeditions
     if (requestedTypes.includes('expedition')) {
       let expQuery = supabase.from('expeditions').select(`
         id, title, description, summary, region,
@@ -40,11 +47,7 @@ const search = async (query) => {
           `title.ilike.%${sanitizedQ}%,description.ilike.%${sanitizedQ}%,summary.ilike.%${sanitizedQ}%`
         );
       }
-
-      if (region) {
-        expQuery = expQuery.eq('region', region);
-      }
-
+      if (region) expQuery = expQuery.eq('region', region);
       if (year) {
         expQuery = expQuery
           .gte('start_date', `${year}-01-01T00:00:00Z`)
@@ -52,13 +55,11 @@ const search = async (query) => {
       }
 
       const { data, error } = await expQuery;
-      if (!error && data) {
-        expeditions = data;
-      }
+      if (!error && data) expeditions = data;
     }
 
-    // Search Publications
-    if (requestedTypes.includes('publication')) {
+    // 2. Knowledge (Publications + Baseline Knowledge)
+    if (requestedTypes.includes('knowledge')) {
       let pubQuery = supabase.from('publications').select(`
         id, title, abstract, authors, published_date, journal
       `);
@@ -68,7 +69,6 @@ const search = async (query) => {
           `title.ilike.%${sanitizedQ}%,abstract.ilike.%${sanitizedQ}%,journal.ilike.%${sanitizedQ}%`
         );
       }
-
       if (year) {
         pubQuery = pubQuery
           .gte('published_date', `${year}-01-01T00:00:00Z`)
@@ -76,12 +76,25 @@ const search = async (query) => {
       }
 
       const { data, error } = await pubQuery;
-      if (!error && data) {
-        publications = data;
-      }
+      if (!error && data) publications = data;
+
+      // Include baseline knowledge matching query
+      BASELINE_KNOWLEDGE.forEach((bk) => {
+        if (!sanitizedQ || bk.title.toLowerCase().includes(qLower) || bk.description.toLowerCase().includes(qLower)) {
+          if (!publications.some((p) => p.id === bk.id)) {
+            publications.push({
+              id: bk.id,
+              title: bk.title,
+              abstract: bk.description,
+              published_date: '2024-01-15T00:00:00Z',
+              journal: 'NCPOR Scientific Review'
+            });
+          }
+        }
+      });
     }
 
-    // Search Media
+    // 3. Media
     if (requestedTypes.includes('media')) {
       let mediaQuery = supabase.from('media').select(`
         id, title, description, type, thumbnail_url,
@@ -89,122 +102,163 @@ const search = async (query) => {
       `);
 
       if (sanitizedQ) {
-        mediaQuery = mediaQuery.or(
-          `title.ilike.%${sanitizedQ}%,description.ilike.%${sanitizedQ}%`
-        );
+        mediaQuery = mediaQuery.or(`title.ilike.%${sanitizedQ}%,description.ilike.%${sanitizedQ}%`);
       }
 
       const { data, error } = await mediaQuery;
-      if (!error && data) {
-        mediaItems = data;
-      }
+      if (!error && data) mediaItems = data;
     }
 
-    // Search Datasets
+    // 4. Datasets
     if (requestedTypes.includes('dataset')) {
       let dsQuery = supabase.from('datasets').select(`
         id, title, description, format, created_at
       `);
 
       if (sanitizedQ) {
-        dsQuery = dsQuery.or(
-          `title.ilike.%${sanitizedQ}%,description.ilike.%${sanitizedQ}%`
-        );
+        dsQuery = dsQuery.or(`title.ilike.%${sanitizedQ}%,description.ilike.%${sanitizedQ}%`);
       }
 
       const { data, error } = await dsQuery;
-      if (!error && data) {
-        datasets = data;
-      }
+      if (!error && data) datasets = data;
+
+      // Include baseline datasets matching query
+      BASELINE_DATASETS.forEach((bd) => {
+        if (
+          !sanitizedQ ||
+          bd.title.toLowerCase().includes(qLower) ||
+          bd.description.toLowerCase().includes(qLower) ||
+          bd.discipline.toLowerCase().includes(qLower) ||
+          bd.station.toLowerCase().includes(qLower)
+        ) {
+          if (!datasets.some((d) => d.id === bd.id)) {
+            datasets.push({
+              id: bd.id,
+              title: bd.title,
+              description: bd.description,
+              format: 'NetCDF/CSV',
+              created_at: '2024-02-01T00:00:00Z',
+              region: bd.region,
+              discipline: bd.discipline
+            });
+          }
+        }
+      });
+    }
+
+    // 5. Stations
+    if (requestedTypes.includes('station')) {
+      const allStations = stationsService.getAllStationsFlat();
+      stations = allStations.filter((st) => {
+        if (!sanitizedQ) return true;
+        return (
+          st.name.toLowerCase().includes(qLower) ||
+          st.location.toLowerCase().includes(qLower) ||
+          st.region.toLowerCase().includes(qLower) ||
+          st.id.toLowerCase().includes(qLower)
+        );
+      });
     }
   } catch (err) {
     logger.error(`Search query execution error: ${err.message}`);
   }
 
-  // d) Map to unified format
+  // Map to unified result format
   const results = [];
 
-  if (requestedTypes.includes('expedition') && expeditions.length > 0) {
+  if (requestedTypes.includes('expedition')) {
     expeditions.forEach((e) => {
-      const text = e.summary || e.description || '';
+      const desc = e.summary || e.description || '';
       results.push({
-        type: 'expedition',
         id: e.id,
+        type: 'expedition',
         title: e.title,
-        snippet: text.length > 200 ? text.substring(0, 200) + '...' : text,
-        thumbnailUrl: e.cover_image_url || null,
+        description: desc.length > 220 ? desc.substring(0, 220) + '...' : desc,
+        url: `/expeditions/${e.slug || e.id}`,
+        score: 1.0,
         date: e.start_date || null,
         region: e.region || null,
-        url: `/api/v1/expeditions/${e.slug || e.id}`
+        thumbnailUrl: e.cover_image_url || null
       });
     });
   }
 
-  if (requestedTypes.includes('publication') && publications.length > 0) {
+  if (requestedTypes.includes('knowledge')) {
     publications.forEach((p) => {
-      const text = p.abstract || '';
+      const desc = p.abstract || '';
       results.push({
-        type: 'publication',
         id: p.id,
+        type: 'knowledge',
         title: p.title,
-        snippet: text.length > 200 ? text.substring(0, 200) + '...' : text,
-        thumbnailUrl: null,
+        description: desc.length > 220 ? desc.substring(0, 220) + '...' : desc,
+        url: `/knowledge/${p.id}`,
+        score: 1.0,
         date: p.published_date || null,
-        url: `/api/v1/publications/${p.id}`
+        category: p.journal || 'Research Paper'
       });
     });
   }
 
-  if (requestedTypes.includes('media') && mediaItems.length > 0) {
+  if (requestedTypes.includes('media')) {
     mediaItems.forEach((m) => {
-      const text = m.description || '';
+      const desc = m.description || '';
       results.push({
-        type: 'media',
         id: m.id,
+        type: 'media',
         title: m.title,
-        snippet: text.length > 200 ? text.substring(0, 200) + '...' : text,
-        thumbnailUrl: m.thumbnail_url || m.file_url || null,
+        description: desc.length > 220 ? desc.substring(0, 220) + '...' : desc,
+        url: `/media/${m.id}`,
+        score: 1.0,
         date: m.captured_at || m.created_at || null,
-        url: `/api/v1/media/${m.id}`
+        thumbnailUrl: m.thumbnail_url || m.file_url || null
       });
     });
   }
 
-  if (requestedTypes.includes('dataset') && datasets.length > 0) {
+  if (requestedTypes.includes('dataset')) {
     datasets.forEach((d) => {
-      const text = d.description || '';
+      const desc = d.description || '';
       results.push({
-        type: 'dataset',
         id: d.id,
+        type: 'dataset',
         title: d.title,
-        snippet: text.length > 200 ? text.substring(0, 200) + '...' : text,
-        thumbnailUrl: null,
+        description: desc.length > 220 ? desc.substring(0, 220) + '...' : desc,
+        url: `/datasets/${d.id}`,
+        score: 1.0,
         date: d.created_at || null,
-        url: `/api/v1/datasets/${d.id}`
+        format: d.format || null
       });
     });
   }
 
-  // e) Sort by date descending (null dates to the end)
-  results.sort((a, b) => {
-    if (!a.date && !b.date) return 0;
-    if (!a.date) return 1;
-    if (!b.date) return -1;
-    return new Date(b.date) - new Date(a.date);
-  });
+  if (requestedTypes.includes('station')) {
+    stations.forEach((s) => {
+      results.push({
+        id: s.id,
+        type: 'station',
+        title: s.name,
+        description: s.description,
+        url: `/map?station=${s.id}`,
+        score: 1.0,
+        location: s.location,
+        status: s.status,
+        coordinates: s.coordinates
+      });
+    });
+  }
 
-  // f) Counts per type
   const counts = {
-    expedition: expeditions.length,
-    publication: publications.length,
+    all: results.length,
+    dataset: datasets.length,
+    knowledge: publications.length,
     media: mediaItems.length,
-    dataset: datasets.length
+    expedition: expeditions.length,
+    station: stations.length
   };
-  const total = results.length;
 
-  // g) Pagination
+  const total = results.length;
   const pageNum = Math.max(1, parseInt(page, 10) || 1);
-  const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 10));
+  const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
   const from = (pageNum - 1) * limitNum;
   const paginatedResults = results.slice(from, from + limitNum);
 
@@ -219,9 +273,7 @@ const search = async (query) => {
     }
   };
 
-  // h) Cache for 2 minutes
   cache.set(cacheKey, responseData, 120);
-
   return responseData;
 };
 
@@ -242,35 +294,40 @@ const suggest = async (q) => {
 
   const suggestions = [];
 
+  // Check stations
+  stationsService.getAllStationsFlat().forEach((st) => {
+    if (st.name.toLowerCase().includes(sanitizedQ.toLowerCase())) {
+      suggestions.push({ type: 'station', id: st.id, title: st.name });
+    }
+  });
+
+  // Check baseline datasets
+  BASELINE_DATASETS.forEach((bd) => {
+    if (bd.title.toLowerCase().includes(sanitizedQ.toLowerCase())) {
+      suggestions.push({ type: 'dataset', id: bd.id, title: bd.title });
+    }
+  });
+
+  // Check baseline knowledge
+  BASELINE_KNOWLEDGE.forEach((bk) => {
+    if (bk.title.toLowerCase().includes(sanitizedQ.toLowerCase())) {
+      suggestions.push({ type: 'knowledge', id: bk.id, title: bk.title });
+    }
+  });
+
   try {
     const [expRes, pubRes, mediaRes, dataRes] = await Promise.all([
-      supabase
-        .from('expeditions')
-        .select('id, title')
-        .ilike('title', `%${sanitizedQ}%`)
-        .limit(3),
-      supabase
-        .from('publications')
-        .select('id, title')
-        .ilike('title', `%${sanitizedQ}%`)
-        .limit(3),
-      supabase
-        .from('media')
-        .select('id, title')
-        .ilike('title', `%${sanitizedQ}%`)
-        .limit(3),
-      supabase
-        .from('datasets')
-        .select('id, title')
-        .ilike('title', `%${sanitizedQ}%`)
-        .limit(3)
+      supabase.from('expeditions').select('id, title').ilike('title', `%${sanitizedQ}%`).limit(2),
+      supabase.from('publications').select('id, title').ilike('title', `%${sanitizedQ}%`).limit(2),
+      supabase.from('media').select('id, title').ilike('title', `%${sanitizedQ}%`).limit(2),
+      supabase.from('datasets').select('id, title').ilike('title', `%${sanitizedQ}%`).limit(2)
     ]);
 
     (expRes.data || []).forEach((item) =>
       suggestions.push({ type: 'expedition', id: item.id, title: item.title })
     );
     (pubRes.data || []).forEach((item) =>
-      suggestions.push({ type: 'publication', id: item.id, title: item.title })
+      suggestions.push({ type: 'knowledge', id: item.id, title: item.title })
     );
     (mediaRes.data || []).forEach((item) =>
       suggestions.push({ type: 'media', id: item.id, title: item.title })
@@ -282,9 +339,8 @@ const suggest = async (q) => {
     logger.warn(`Suggestion query error: ${err.message}`);
   }
 
-  const finalSuggestions = suggestions.slice(0, 12);
+  const finalSuggestions = suggestions.slice(0, 10);
   cache.set(cacheKey, finalSuggestions, 120);
-
   return finalSuggestions;
 };
 

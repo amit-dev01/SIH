@@ -19,17 +19,19 @@ const search = asyncHandler(async (req, res) => {
     limit
   });
 
-  return apiResponse.success(
-    res,
-    {
+  return res.status(200).json({
+    success: true,
+    message: 'Search results',
+    results: searchResult.results,
+    counts: searchResult.counts,
+    total: searchResult.total,
+    data: {
       results: searchResult.results,
       counts: searchResult.counts,
       total: searchResult.total
     },
-    'Search results',
-    200,
-    searchResult.meta
-  );
+    meta: searchResult.meta
+  });
 });
 
 const suggest = asyncHandler(async (req, res) => {

@@ -30,6 +30,47 @@ router.get('/', ctrl.getAll);
 
 /**
  * @swagger
+ * /datasets/nl-search:
+ *   post:
+ *     summary: Natural language dataset search (interprets text query into structured filters)
+ *     tags: [Datasets]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [query]
+ *             properties:
+ *               query: { type: string, example: "Show Antarctic atmospheric datasets between 2018 and 2022" }
+ *     responses:
+ *       200:
+ *         description: Interpreted query with applied filters and matched datasets
+ */
+router.post('/nl-search', ctrl.nlSearch);
+
+/**
+ * @swagger
+ * /datasets/{id}/export:
+ *   get:
+ *     summary: Export dataset in requested format (NetCDF, CSV, GeoJSON)
+ *     tags: [Datasets]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: format
+ *         schema: { type: string, enum: [netcdf, csv, geojson], default: csv }
+ *     responses:
+ *       200:
+ *         description: Dataset package file stream
+ */
+router.get('/:id/export', ctrl.exportDataset);
+
+/**
+ * @swagger
  * /datasets/{id}/download:
  *   get:
  *     summary: Request download for a dataset (increments download counter)

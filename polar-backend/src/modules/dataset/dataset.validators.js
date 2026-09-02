@@ -26,11 +26,18 @@ const updateDatasetSchema = createDatasetSchema.partial();
 
 const queryDatasetSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(50).default(10),
-  format: z.enum(DATASET_FORMATS).optional(),
-  expeditionId: z.string().uuid('expeditionId must be a valid UUID').optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  format: z.string().optional(),
+  dataFormat: z.string().optional(),
+  expeditionId: z.string().optional(),
   search: z.string().optional(),
-  sortBy: z.enum(['created_at', 'title', 'download_count', 'file_size']).default('created_at'),
+  q: z.string().optional(),
+  region: z.string().optional(),
+  discipline: z.string().optional(),
+  station: z.string().optional(),
+  startYear: z.coerce.number().optional(),
+  endYear: z.coerce.number().optional(),
+  sortBy: z.string().default('newest'),
   sortOrder: z.enum(['asc', 'desc']).default('desc')
 });
 
