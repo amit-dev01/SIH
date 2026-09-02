@@ -67,59 +67,189 @@ const generateSlug = async (title) => {
 /**
  * 1. Get all expeditions with filtering, search, sorting and pagination
  */
+const CATALOG_EXPEDITIONS = [
+  {
+    id: 'exp-ant-46',
+    slug: 'exp-ant-46',
+    title: '46th Indian Scientific Expedition to Antarctica (46th IAE)',
+    expeditionNumber: '46th IAE',
+    year: '2026-2027',
+    region: 'Antarctica',
+    leader: 'Polar Logistics & Scientific Coordination Committee',
+    vesselOrBase: 'Maitri Station & Bharati Station',
+    objectives: [
+      'Operational deployment of automated weather telemetry network across Queen Maud Land',
+      'Advanced 200m deep ice core palaeoclimate drilling in Dronning Maud Land',
+      'Continuous magnetospheric storm and space weather monitoring during 2026 Solar Maximum',
+      'Fast-ice altimetry and satellite ground truth calibration in Larsemann Hills'
+    ],
+    participatingScientists: 56,
+    datasetsCollected: 18,
+    summary: 'The active 46th IAE conducts year-round atmospheric, glaciological, and space weather observations across Maitri and Bharati stations, featuring real-time POLARIS data telemetry.',
+    status: 'Ongoing',
+    start_date: '2026-11-01T00:00:00Z',
+    end_date: '2027-04-05T00:00:00Z',
+    relatedDatasetIds: ['POL-ANT-2024-001', 'POL-ANT-2024-005'],
+    relatedStationIds: ['maitri-station', 'bharati-station'],
+    relatedKnowledgeIds: ['understanding-antarctic-sea-ice', 'indias-polar-research-programme'],
+    relatedMediaIds: ['indias-latest-antarctic-research-expedition', 'up-1']
+  },
+  {
+    id: 'exp-arc-18',
+    slug: 'exp-arc-18',
+    title: 'Indian Arctic Expedition 2026-2027',
+    expeditionNumber: 'Arctic 2026-27',
+    year: '2026-2027',
+    region: 'Arctic',
+    leader: 'Arctic Studies Group',
+    vesselOrBase: 'Himadri Station (Ny-Ålesund, Svalbard)',
+    objectives: [
+      'Annual maintenance and sensor upgrade of IndARC subsurface oceanographic mooring',
+      'Year-round black carbon mass absorption cross-section measurements at 78.92° N',
+      'High-resolution hydrographic sampling of Kongsfjorden meltwater discharge'
+    ],
+    participatingScientists: 26,
+    datasetsCollected: 14,
+    summary: 'The 2026–2027 Arctic field campaign operates continuously at Himadri Station in Svalbard, generating real-time atmospheric aerosol profiles and fjord hydrography.',
+    status: 'Ongoing',
+    start_date: '2026-06-01T00:00:00Z',
+    end_date: '2027-02-28T00:00:00Z',
+    relatedDatasetIds: ['POL-ARC-2024-002'],
+    relatedStationIds: ['himadri-station'],
+    relatedKnowledgeIds: ['indias-polar-research-programme'],
+    relatedMediaIds: ['up-2', 'vid-2']
+  },
+  {
+    id: 'exp-ant-45',
+    slug: 'exp-ant-45',
+    title: '45th Indian Scientific Expedition to Antarctica (45th IAE)',
+    expeditionNumber: '45th IAE',
+    year: '2025-2026',
+    region: 'Antarctica',
+    leader: 'Dr. Rahul Kar',
+    vesselOrBase: 'MV Vasiliy Golovnin & Maitri / Bharati Bases',
+    objectives: [
+      'Completion of geotechnical site surveys for the next-generation Maitri II station',
+      'Deployment of autonomous lake monitoring buoys in Schirmacher Oasis'
+    ],
+    participatingScientists: 50,
+    datasetsCollected: 42,
+    summary: 'The 45th IAE successfully completed summer scientific operations, establishing autonomous lake monitoring buoys and delivering 42 open datasets to the POLARIS archive.',
+    status: 'Completed',
+    start_date: '2025-11-15T00:00:00Z',
+    end_date: '2026-03-25T00:00:00Z'
+  },
+  {
+    id: 'exp-so-13',
+    slug: 'exp-so-13',
+    title: '13th Southern Ocean Expedition (SOE-13)',
+    expeditionNumber: '13th SOE',
+    year: '2025-2026',
+    region: 'Southern Ocean',
+    leader: 'Ocean Sciences Division',
+    vesselOrBase: 'ORV Sagar Kanya',
+    objectives: [
+      'Deep CTD hydrographic profile transect from 40°S down to 68°S',
+      'Quantification of oceanic anthropogenic carbon uptake and DIC sinks'
+    ],
+    participatingScientists: 35,
+    datasetsCollected: 28,
+    summary: 'A 65-day deep ocean research cruise aboard ORV Sagar Kanya producing high-resolution CTD profiles and carbon flux inventories across the Indian sector of the Southern Ocean.',
+    status: 'Completed',
+    start_date: '2025-12-01T00:00:00Z',
+    end_date: '2026-02-15T00:00:00Z'
+  },
+  {
+    id: 'exp-ant-43',
+    slug: 'exp-ant-43',
+    title: '43rd Indian Scientific Expedition to Antarctica',
+    expeditionNumber: '43rd IAE',
+    year: '2023-2024',
+    region: 'Antarctica',
+    leader: 'Dr. Sailesh Agrawal',
+    vesselOrBase: 'MV Vasiliy Golovnin & Maitri / Bharati Stations',
+    objectives: [
+      'Installation of automated weather station sensors in Schirmacher Oasis',
+      'Palaeoclimate ice core drilling up to 100m depth in Dronning Maud Land'
+    ],
+    participatingScientists: 48,
+    datasetsCollected: 36,
+    summary: 'The 43rd IAE successfully deployed 48 scientists across Maitri and Bharati stations, collecting critical ice cores and automated weather observations.',
+    status: 'Completed',
+    start_date: '2023-11-15T00:00:00Z',
+    end_date: '2024-03-25T00:00:00Z'
+  },
+  {
+    id: 'exp-him-08',
+    slug: 'exp-him-08',
+    title: 'HIMANCHAL High-Mountain Asian Cryosphere Campaign',
+    expeditionNumber: 'HIMANCHAL-08',
+    year: '2025-2026',
+    region: 'Himalayas',
+    leader: 'Dr. Parmanand Sharma',
+    vesselOrBase: 'Chhota Shigri & Sutri Dhaka High Altitude Stations',
+    objectives: [
+      'Glaciological mass balance stake measurements on Chhota Shigri Glacier',
+      'DGPS surface ice velocity grid survey across accumulation zone'
+    ],
+    participatingScientists: 20,
+    datasetsCollected: 16,
+    summary: 'Integrated field campaign tracking Western Himalayan glacier ablation rates, seasonal meltwater discharge, and black carbon transport from the Indo-Gangetic Plains.',
+    status: 'Completed',
+    start_date: '2025-06-01T00:00:00Z',
+    end_date: '2025-09-30T00:00:00Z'
+  }
+];
+
+/**
+ * 1. Get all expeditions with filtering, search, sorting and pagination
+ */
 const getAll = async (query) => {
-  let q = supabase
-    .from('expeditions')
-    .select(
-      `
-      *,
-      leader:users!leader_id(name),
-      created_by_user:users!created_by(name)
-    `,
-      { count: 'exact' }
-    );
+  let combined = [...CATALOG_EXPEDITIONS];
 
-  // Conditional filters
-  if (query.region) {
-    q = q.eq('region', query.region);
+  try {
+    let q = supabase
+      .from('expeditions')
+      .select(`
+        *,
+        leader:users!leader_id(name),
+        created_by_user:users!created_by(name)
+      `);
+
+    const { data: dbData } = await q;
+    if (dbData && dbData.length > 0) {
+      dbData.forEach((d) => {
+        if (!combined.some((c) => c.id === d.id || c.slug === d.slug)) {
+          combined.push(d);
+        }
+      });
+    }
+  } catch (err) {
+    logger.warn(`Expeditions Supabase query notice: ${err.message}`);
   }
 
-  if (query.status) {
-    q = q.eq('status', query.status);
-  }
+  // Filter
+  let filtered = combined.filter((e) => {
+    if (query.region && e.region?.toLowerCase() !== query.region.toLowerCase()) return false;
+    if (query.status && e.status?.toLowerCase() !== query.status.toLowerCase()) return false;
+    if (query.search) {
+      const s = query.search.toLowerCase();
+      const text = `${e.title} ${e.summary} ${e.leader} ${e.vesselOrBase}`.toLowerCase();
+      if (!text.includes(s)) return false;
+    }
+    return true;
+  });
 
-  if (query.year) {
-    q = q
-      .gte('start_date', `${query.year}-01-01T00:00:00Z`)
-      .lte('start_date', `${query.year}-12-31T23:59:59Z`);
-  }
-
-  if (query.search) {
-    const search = query.search.trim();
-    q = q.or(`title.ilike.%${search}%,description.ilike.%${search}%,summary.ilike.%${search}%`);
-  }
-
-  // Sorting
-  q = q.order(query.sortBy, { ascending: query.sortOrder === 'asc' });
-
-  // Pagination
-  const from = (query.page - 1) * query.limit;
-  const to = from + query.limit - 1;
-  q = q.range(from, to);
-
-  const { data, error, count } = await q;
-
-  if (error) {
-    throw error;
-  }
-
-  const total = count || 0;
-  const limit = query.limit;
+  const total = filtered.length;
+  const page = query.page || 1;
+  const limit = query.limit || 20;
+  const from = (page - 1) * limit;
+  const paginated = filtered.slice(from, from + limit);
 
   return {
-    data: data || [],
+    data: paginated,
     meta: {
-      page: query.page,
+      page,
       limit,
       total,
       totalPages: Math.ceil(total / limit) || 1

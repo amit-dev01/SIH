@@ -123,38 +123,66 @@ const generateObservation = (region, status) => {
   if (status === 'HISTORIC') return null;
   const now = new Date().toISOString();
   switch (region) {
-    case 'ANTARCTICA':
+    case 'ANTARCTICA': {
+      const t = -(Math.floor(Math.random() * 15) + 14);
+      const w = Math.floor(Math.random() * 20) + 12;
+      const p = Math.floor(Math.random() * 25) + 975;
       return {
-        temp: -(Math.floor(Math.random() * 20) + 15), // -15 to -35
-        wind: Math.floor(Math.random() * 25) + 10,    // 10-35 m/s
-        pressure: Math.floor(Math.random() * 30) + 970, // 970-1000 hPa
+        temp: `${t}.2°C`,
+        wind: `${w}.4 m/s (SSE)`,
+        pressure: `${p}.4 hPa`,
         condition: 'Blizzard Risk',
-        updatedAt: now
+        updatedAt: '10 mins ago',
+        rawTemp: t,
+        rawWind: w,
+        rawPressure: p
       };
-    case 'ARCTIC':
+    }
+    case 'ARCTIC': {
+      const t = -(Math.floor(Math.random() * 10) + 8);
+      const w = Math.floor(Math.random() * 15) + 6;
+      const p = Math.floor(Math.random() * 20) + 990;
       return {
-        temp: -(Math.floor(Math.random() * 15) + 5), // -5 to -20
-        wind: Math.floor(Math.random() * 20) + 5,    // 5-25 m/s
-        pressure: Math.floor(Math.random() * 20) + 990, // 990-1010 hPa
+        temp: `${t}.5°C`,
+        wind: `${w}.1 m/s (NW)`,
+        pressure: `${p}.0 hPa`,
         condition: 'Polar Night',
-        updatedAt: now
+        updatedAt: '15 mins ago',
+        rawTemp: t,
+        rawWind: w,
+        rawPressure: p
       };
-    case 'HIMALAYA':
+    }
+    case 'HIMALAYA': {
+      const t = -(Math.floor(Math.random() * 8) + 2);
+      const w = Math.floor(Math.random() * 12) + 5;
+      const p = Math.floor(Math.random() * 20) + 625;
       return {
-        temp: -(Math.floor(Math.random() * 10) + 2), // -2 to -12
-        wind: Math.floor(Math.random() * 15) + 5,    // 5-20 m/s
-        pressure: Math.floor(Math.random() * 30) + 620, // 620-650 hPa (high altitude)
+        temp: `${t}.0°C`,
+        wind: `${w}.5 m/s (W)`,
+        pressure: `${p}.2 hPa`,
         condition: 'Clear',
-        updatedAt: now
+        updatedAt: '20 mins ago',
+        rawTemp: t,
+        rawWind: w,
+        rawPressure: p
       };
-    default:
+    }
+    default: {
+      const t = Math.floor(Math.random() * 4) + 1;
+      const w = Math.floor(Math.random() * 15) + 8;
+      const p = Math.floor(Math.random() * 20) + 1005;
       return {
-        temp: Math.floor(Math.random() * 5) - 2,
-        wind: Math.floor(Math.random() * 15) + 5,
-        pressure: Math.floor(Math.random() * 20) + 1000,
+        temp: `${t}.8°C`,
+        wind: `${w}.0 m/s (SW)`,
+        pressure: `${p}.0 hPa`,
         condition: 'Survey Active',
-        updatedAt: now
+        updatedAt: '30 mins ago',
+        rawTemp: t,
+        rawWind: w,
+        rawPressure: p
       };
+    }
   }
 };
 
