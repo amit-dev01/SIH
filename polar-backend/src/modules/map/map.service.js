@@ -226,7 +226,22 @@ const getLocations = async (query = {}) => {
       for (const reg of targetRegions) {
         const stations = STATION_COORDS[reg] || [];
         for (const station of stations) {
-          // Find expeditions matching this specific station
+          const slugId = station.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          // 1. Add permanent station pin
+          pins.push({
+            id: `station-${slugId}`,
+            type: 'station',
+            title: station.name,
+            lat: station.lat,
+            lng: station.lng,
+            region: reg,
+            location: station.location || null,
+            established: station.established || null,
+            status: station.status === 'ACTIVE' ? 'Active' : station.status === 'SEASONAL' ? 'Seasonal' : 'Decommissioned',
+            url: `/map?station=${slugId}`
+          });
+
+          // 2. Find expeditions matching this specific station
           const matchingExps = allExpeditions.filter((exp) => {
             if (exp.region !== reg) return false;
             const textToSearch = [exp.title, exp.description, exp.summary, exp.slug].filter(Boolean).join(' ').toLowerCase();
