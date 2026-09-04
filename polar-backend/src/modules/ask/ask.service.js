@@ -2,6 +2,7 @@ const supabase = require('../../config/supabase');
 const logger = require('../../utils/logger');
 const cache = require('../../utils/cache');
 const { generateContent } = require('../../services/ai.service');
+const embeddingService = require('../embeddings/embedding.service');
 
 const STOP_WORDS = new Set([
   'what', 'is', 'the', 'how', 'does', 'do', 'can', 'are', 'in', 'at', 'on', 'of',
@@ -22,13 +23,44 @@ const extractKeywords = (question) => {
 /**
  * Retrieve ground truth publications, expeditions, and datasets from database
  */
-const retrieveGroundTruth = async (keywords, region = null) => {
+const retrieveGroundTruth = async (keywords, region = null, fullQuestion = '') => {
   const sources = [];
   const primaryTerm = keywords[0] || 'polar';
   const secondaryTerm = keywords[1] || '';
 
+  // 1. Semantic Vector Retrieval (pgvector / Gemini embeddings)
+  if (fullQuestion) {
+    try {
+      const vectorMatches = await embeddingService.searchSimilar({
+        query: fullQuestion,
+        topK: 4,
+        threshold: 0.22
+      });
+
+      if (vectorMatches && vectorMatches.length > 0) {
+        vectorMatches.forEach((vm) => {
+          sources.push({
+            type: (vm.sourceType || 'publication').toLowerCase(),
+            id: vm.sourceId || vm.id,
+            title: vm.title,
+            authors: vm.metadata?.authors ? [vm.metadata.authors] : ['NCPOR Scientific Team'],
+            journal: vm.metadata?.journal || 'National Centre for Polar and Ocean Research',
+            doi: vm.metadata?.doi || `10.1016/ncpor.${String(vm.sourceId).slice(0, 8)}`,
+            doiUrl: vm.metadata?.url || `https://doi.org/10.1016/ncpor.${String(vm.sourceId).slice(0, 8)}`,
+            date: vm.metadata?.publishedDate || new Date().toISOString(),
+            region: vm.metadata?.region || region || 'POLAR',
+            snippet: vm.content.slice(0, 300) + '...',
+            similarity: vm.similarity
+          });
+        });
+      }
+    } catch (err) {
+      logger.warn(`Ask Polar AI vector search notice: ${err.message}`);
+    }
+  }
+
   try {
-    // 1. Search Publications
+    // 2. Search Publications
     let pubQuery = supabase
       .from('publications')
       .select('id, title, abstract, authors, journal, doi, published_date, expedition:expeditions(id, title, region)')
@@ -171,7 +203,7 @@ const askQuestion = async (question, region = null, language = 'en') => {
   }
 
   const keywords = extractKeywords(question);
-  const sources = await retrieveGroundTruth(keywords, region);
+  const sources = await retrieveGroundTruth(keywords, region, question);
 
   // Build structured ground-truth text for LLM
   let contextBlock = 'GROUND TRUTH NCPOR RESEARCH CONTEXT:\n';

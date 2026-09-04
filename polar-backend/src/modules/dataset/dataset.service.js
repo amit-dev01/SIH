@@ -3,6 +3,7 @@ const logger = require('../../utils/logger');
 const { parseTags, extractStoragePath } = require('../../utils/tagHelper');
 const { CATALOG_DATASETS } = require('./dataset.catalog');
 const { generateContent } = require('../../services/ai.service');
+const embeddingService = require('../embeddings/embedding.service');
 
 /**
  * Helper to convert camelCase keys to snake_case for DB fields
@@ -371,6 +372,23 @@ const create = async (data, file, userId) => {
   }
 
   logger.info(`Dataset created: ${dataset.title}`);
+
+  // Live Auto-Embedding Ingestion Hook
+  embeddingService.upsertDocument({
+    id: `dataset:${dataset.id}`,
+    sourceType: 'DATASET',
+    sourceId: dataset.id,
+    title: dataset.title,
+    content: `${dataset.title}\n${dataset.description || ''}\nFormat: ${dataset.format || ''}\nLicense: ${dataset.license || 'CC-BY-4.0'}`,
+    metadata: {
+      id: dataset.id,
+      type: 'dataset',
+      format: dataset.format,
+      doi: dataset.doi,
+      url: `/datasets/${dataset.id}`
+    }
+  }).catch((err) => logger.warn(`Auto-embedding dataset ${dataset.id} failed: ${err.message}`));
+
   return dataset;
 };
 
@@ -452,6 +470,22 @@ const update = async (id, data, userId, userRole) => {
       await supabase.from('dataset_tags').insert(junctions);
     }
   }
+
+  // Live Auto-Embedding Re-index Hook
+  embeddingService.upsertDocument({
+    id: `dataset:${updated.id}`,
+    sourceType: 'DATASET',
+    sourceId: updated.id,
+    title: updated.title,
+    content: `${updated.title}\n${updated.description || ''}\nFormat: ${updated.format || ''}\nLicense: ${updated.license || 'CC-BY-4.0'}`,
+    metadata: {
+      id: updated.id,
+      type: 'dataset',
+      format: updated.format,
+      doi: updated.doi,
+      url: `/datasets/${updated.id}`
+    }
+  }).catch((err) => logger.warn(`Auto-reembedding dataset ${updated.id} failed: ${err.message}`));
 
   return updated;
 };

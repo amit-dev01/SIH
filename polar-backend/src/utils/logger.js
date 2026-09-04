@@ -26,6 +26,11 @@ const logger = {
   },
   error: (message, ...args) => {
     console.error(`${colors.red}[${getTimestamp()}] [ERROR] ${message}${colors.reset}`, ...args);
+  },
+  debug: (message, ...args) => {
+    if (process.env.NODE_ENV === 'development' || process.env.DEBUG) {
+      console.log(`[${getTimestamp()}] [DEBUG] ${message}`, ...args);
+    }
   }
 };
 

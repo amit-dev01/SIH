@@ -1,6 +1,7 @@
 const supabase = require('../../config/supabase');
 const logger = require('../../utils/logger');
 const { parseTags, extractStoragePath } = require('../../utils/tagHelper');
+const embeddingService = require('../embeddings/embedding.service');
 
 /**
  * Helper to convert camelCase keys to snake_case for DB fields
@@ -193,6 +194,23 @@ const create = async (data, pdfFile, userId) => {
   }
 
   logger.info(`Publication created: ${publication.title}`);
+
+  // Live Auto-Embedding Ingestion Hook
+  embeddingService.upsertDocument({
+    id: `publication:${publication.id}`,
+    sourceType: 'PUBLICATION',
+    sourceId: publication.id,
+    title: publication.title,
+    content: `Title: ${publication.title}\nAbstract: ${publication.abstract || ''}\nAuthors: ${Array.isArray(publication.authors) ? publication.authors.join(', ') : publication.authors || ''}\nJournal: ${publication.journal || ''}\nDOI: ${publication.doi || ''}`,
+    metadata: {
+      id: publication.id,
+      type: 'publication',
+      journal: publication.journal,
+      doi: publication.doi,
+      url: `/knowledge/${publication.id}`
+    }
+  }).catch((err) => logger.warn(`Auto-embedding publication ${publication.id} failed: ${err.message}`));
+
   return publication;
 };
 
@@ -247,6 +265,22 @@ const update = async (id, data, userId, userRole) => {
       await supabase.from('publication_tags').insert(junctions);
     }
   }
+
+  // Live Auto-Embedding Re-index Hook
+  embeddingService.upsertDocument({
+    id: `publication:${updated.id}`,
+    sourceType: 'PUBLICATION',
+    sourceId: updated.id,
+    title: updated.title,
+    content: `Title: ${updated.title}\nAbstract: ${updated.abstract || ''}\nAuthors: ${Array.isArray(updated.authors) ? updated.authors.join(', ') : updated.authors || ''}\nJournal: ${updated.journal || ''}\nDOI: ${updated.doi || ''}`,
+    metadata: {
+      id: updated.id,
+      type: 'publication',
+      journal: updated.journal,
+      doi: updated.doi,
+      url: `/knowledge/${updated.id}`
+    }
+  }).catch((err) => logger.warn(`Auto-reembedding publication ${updated.id} failed: ${err.message}`));
 
   return updated;
 };

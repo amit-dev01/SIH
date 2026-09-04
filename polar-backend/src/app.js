@@ -27,6 +27,7 @@ const knowledgeRoutes = require('./modules/knowledge/knowledge.routes');
 const glossaryRoutes = require('./modules/glossary/glossary.routes');
 const faqsRoutes = require('./modules/faqs/faqs.routes');
 const statsRoutes = require('./modules/stats/stats.routes');
+const embeddingRoutes = require('./modules/embeddings/embedding.routes');
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.use('/api/v1/knowledge', knowledgeRoutes);
 app.use('/api/v1/glossary', glossaryRoutes);
 app.use('/api/v1/faqs', faqsRoutes);
 app.use('/api/v1/stats', statsRoutes);
+app.use('/api/v1/embeddings', embeddingRoutes);
 
 // 3. Direct /api/ Aliases (Frontend Flexibility: works whether frontend uses /api/ or /api/v1/)
 app.use('/api/assistant', assistantRoutes);
@@ -78,6 +80,7 @@ app.use('/api/workspace', workspaceRoutes);
 app.use('/api/glossary', glossaryRoutes);
 app.use('/api/faqs', faqsRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/embeddings', embeddingRoutes);
 
 // 4. 404 Handler
 app.use((req, res) => {

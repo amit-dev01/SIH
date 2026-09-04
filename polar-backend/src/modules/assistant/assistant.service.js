@@ -3,6 +3,7 @@ const logger = require('../../utils/logger');
 const cache = require('../../utils/cache');
 const { generateContent } = require('../../services/ai.service');
 const stationsService = require('../stations/stations.service');
+const embeddingService = require('../embeddings/embedding.service');
 
 // Curated scientific baseline data matching frontend catalog IDs
 const BASELINE_DATASETS = [
@@ -94,7 +95,7 @@ const BASELINE_KNOWLEDGE = [
  */
 const findRelevantSources = async (question, context = null) => {
   const sources = [];
-  const qLower = question.toLowerCase();
+  const qLower = (question || '').toLowerCase();
 
   // 1. If context is provided, prioritize it as Source #1
   if (context && context.id) {
@@ -108,99 +109,99 @@ const findRelevantSources = async (question, context = null) => {
       type: contextType,
       title: context.title || context.id,
       description: `Active viewing context: ${context.title || context.id}`,
-      url
+      url,
+      similarity: 1.0
     });
   }
 
-  // 2. Match Baseline Datasets
-  for (const ds of BASELINE_DATASETS) {
-    if (
-      qLower.includes(ds.region.toLowerCase()) ||
-      qLower.includes(ds.station.toLowerCase().split(' ')[0]) ||
-      qLower.includes(ds.discipline.toLowerCase().split(' ')[0]) ||
-      qLower.includes('dataset') ||
-      qLower.includes('data') ||
-      ds.title.toLowerCase().split(' ').some((w) => w.length > 4 && qLower.includes(w))
-    ) {
-      if (!sources.some((s) => s.id === ds.id)) {
-        sources.push({
-          id: ds.id,
-          type: 'dataset',
-          title: ds.title,
-          description: ds.description,
-          url: ds.url
-        });
-      }
-    }
-  }
-
-  // 3. Match Baseline Knowledge
-  for (const kn of BASELINE_KNOWLEDGE) {
-    if (
-      kn.title.toLowerCase().split(' ').some((w) => w.length > 4 && qLower.includes(w)) ||
-      qLower.includes('research') ||
-      qLower.includes('paper') ||
-      qLower.includes('study')
-    ) {
-      if (!sources.some((s) => s.id === kn.id)) {
-        sources.push({
-          id: kn.id,
-          type: 'knowledge',
-          title: kn.title,
-          description: kn.description,
-          url: kn.url
-        });
-      }
-    }
-  }
-
-  // 4. Match Stations
-  const stations = stationsService.getAllStationsFlat();
-  for (const st of stations) {
-    const stNamePart = st.name.toLowerCase().split(' ')[0];
-    if (qLower.includes(stNamePart) || qLower.includes(st.id)) {
-      if (!sources.some((s) => s.id === st.id)) {
-        sources.push({
-          id: st.id,
-          type: 'station',
-          title: st.name,
-          description: `${st.name} (${st.region}) — ${st.location}. Status: ${st.status}`,
-          url: `/map?station=${st.id}`
-        });
-      }
-    }
-  }
-
-  // 5. Query Supabase for dynamic publications/expeditions
+  // 2. High-Precision Semantic Vector Search via pgvector / embeddingService
   try {
-    const firstWord = qLower.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).find((w) => w.length > 3) || 'polar';
-    const { data: pubs } = await supabase
-      .from('publications')
-      .select('id, title, abstract')
-      .or(`title.ilike.%${firstWord}%,abstract.ilike.%${firstWord}%`)
-      .limit(2);
+    const vectorMatches = await embeddingService.searchSimilar({
+      query: question,
+      topK: 5,
+      threshold: 0.22
+    });
 
-    if (pubs && pubs.length > 0) {
-      pubs.forEach((p) => {
-        if (!sources.some((s) => s.id === p.id)) {
+    if (vectorMatches && vectorMatches.length > 0) {
+      vectorMatches.forEach((vm) => {
+        if (!sources.some((s) => s.id === vm.sourceId || s.id === vm.id)) {
+          let url = vm.metadata?.url;
+          if (!url) {
+            const st = (vm.sourceType || '').toLowerCase();
+            if (st === 'dataset') url = `/datasets/${vm.sourceId}`;
+            else if (st === 'station') url = `/map?station=${vm.sourceId}`;
+            else if (st === 'knowledge' || st === 'publication') url = `/knowledge/${vm.sourceId}`;
+            else if (st === 'expedition') url = `/expeditions/${vm.sourceId}`;
+            else url = '/';
+          }
+
           sources.push({
-            id: p.id,
-            type: 'knowledge',
-            title: p.title,
-            description: p.abstract ? p.abstract.slice(0, 200) + '...' : p.title,
-            url: `/knowledge/${p.id}`
+            id: vm.sourceId || vm.id,
+            type: (vm.sourceType || 'dataset').toLowerCase(),
+            title: vm.title,
+            description: vm.content.length > 250 ? vm.content.slice(0, 247) + '...' : vm.content,
+            url,
+            similarity: vm.similarity
           });
         }
       });
     }
   } catch (err) {
-    logger.warn(`Assistant DB query notice: ${err.message}`);
+    logger.warn(`Semantic vector search notice: ${err.message}`);
   }
 
-  // Guarantee at least 1-3 highly relevant sources
+  // 3. Fallback to Baseline Datasets if vector matches are sparse
+  if (sources.length < 3) {
+    for (const ds of BASELINE_DATASETS) {
+      if (
+        qLower.includes(ds.region.toLowerCase()) ||
+        qLower.includes(ds.station.toLowerCase().split(' ')[0]) ||
+        qLower.includes(ds.discipline.toLowerCase().split(' ')[0]) ||
+        qLower.includes('dataset') ||
+        qLower.includes('data') ||
+        ds.title.toLowerCase().split(' ').some((w) => w.length > 4 && qLower.includes(w))
+      ) {
+        if (!sources.some((s) => s.id === ds.id)) {
+          sources.push({
+            id: ds.id,
+            type: 'dataset',
+            title: ds.title,
+            description: ds.description,
+            url: ds.url,
+            similarity: 0.72
+          });
+        }
+      }
+    }
+  }
+
+  // 4. Fallback to Baseline Knowledge
+  if (sources.length < 3) {
+    for (const kn of BASELINE_KNOWLEDGE) {
+      if (
+        kn.title.toLowerCase().split(' ').some((w) => w.length > 4 && qLower.includes(w)) ||
+        qLower.includes('research') ||
+        qLower.includes('paper') ||
+        qLower.includes('study')
+      ) {
+        if (!sources.some((s) => s.id === kn.id)) {
+          sources.push({
+            id: kn.id,
+            type: 'knowledge',
+            title: kn.title,
+            description: kn.description,
+            url: kn.url,
+            similarity: 0.68
+          });
+        }
+      }
+    }
+  }
+
+  // 5. Guarantee at least 1-2 curated sources if none matched
   if (sources.length === 0) {
-    sources.push(BASELINE_DATASETS[0]);
-    sources.push(BASELINE_KNOWLEDGE[0]);
+    sources.push({ ...BASELINE_DATASETS[0], similarity: 0.6 });
+    sources.push({ ...BASELINE_KNOWLEDGE[0], similarity: 0.6 });
   }
 
   return sources.slice(0, 4);
@@ -223,13 +224,14 @@ const askAssistant = async ({ question, context = null, messages = [] }) => {
     return cached;
   }
 
-  // 1. Retrieve ground-truth sources
+  // 1. Retrieve ground-truth sources via Semantic Vector Search
   const sources = await findRelevantSources(cleanQuestion, context);
 
-  // 2. Build ground truth text
-  let contextBlock = 'GROUND TRUTH NCPOR SCIENTIFIC CONTEXT:\n';
+  // 2. Build ground truth text with semantic relevance
+  let contextBlock = 'GROUND TRUTH NCPOR SCIENTIFIC CONTEXT (SEMANTIC VECTOR RETRIEVAL):\n';
   sources.forEach((s, idx) => {
-    contextBlock += `[Source ${idx + 1}] (${s.type.toUpperCase()}): ${s.title}\nDescription: ${s.description}\nLink: ${s.url}\n\n`;
+    const simLabel = s.similarity ? ` [Relevance: ${(s.similarity * 100).toFixed(0)}%]` : '';
+    contextBlock += `[Source ${idx + 1}] (${s.type.toUpperCase()}${simLabel}): ${s.title}\nDescription: ${s.description}\nLink: ${s.url}\n\n`;
   });
 
   // 3. Format message history (up to last 4 turns)
